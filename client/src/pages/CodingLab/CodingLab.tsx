@@ -1,0 +1,334 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  Code2, Play, CheckCircle2, XCircle, Sparkles, 
+  Terminal, Bug, Zap, RotateCcw, Loader2, ChevronRight, Check 
+} from 'lucide-react';
+import confetti from 'canvas-confetti';
+import { api } from '../../services/api';
+import { CodingProblem } from '../../types';
+import { Badge } from '../../components/Badge';
+
+export const CodingLab: React.FC = () => {
+  const [problems, setProblems] = useState<CodingProblem[]>([]);
+  const [selectedProblem, setSelectedProblem] = useState<CodingProblem | null>(null);
+  const [language, setLanguage] = useState<'javascript' | 'python' | 'c'>('javascript');
+  const [code, setCode] = useState<string>('');
+  const [customStdin, setCustomStdin] = useState<string>('');
+
+  // Execution & Test Results
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [executionOutput, setExecutionOutput] = useState<any>(null);
+  const [testEvaluation, setTestEvaluation] = useState<any>(null);
+
+  // AI Assistant State
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getCodingProblems().then((fetched) => {
+      setProblems(fetched);
+      if (fetched.length > 0) {
+        api.getCodingProblemDetail(fetched[0].slug).then((detail) => {
+          if (detail) {
+            setSelectedProblem(detail);
+            setCode(detail.starterCode.javascript);
+          }
+        });
+      }
+    });
+  }, []);
+
+  const handleSelectProblem = async (slug: string) => {
+    const detail = await api.getCodingProblemDetail(slug);
+    if (detail) {
+      setSelectedProblem(detail);
+      setCode(detail.starterCode[language]);
+      setExecutionOutput(null);
+      setTestEvaluation(null);
+      setAiAnalysis(null);
+    }
+  };
+
+  const handleLanguageChange = (newLang: 'javascript' | 'python' | 'c') => {
+    setLanguage(newLang);
+    if (selectedProblem) {
+      setCode(selectedProblem.starterCode[newLang]);
+    }
+  };
+
+  const handleRunCode = async () => {
+    if (isExecuting) return;
+    setIsExecuting(true);
+    setTestEvaluation(null);
+    try {
+      const result = await api.executeCode(language, code, customStdin);
+      setExecutionOutput(result);
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const handleSubmitProblem = async () => {
+    if (!selectedProblem || isExecuting) return;
+    setIsExecuting(true);
+    setExecutionOutput(null);
+    try {
+      const evaluation = await api.evaluateProblem(selectedProblem.slug, language, code);
+      setTestEvaluation(evaluation);
+      if (evaluation.allPassed) {
+        confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } });
+      }
+    } finally {
+      setIsExecuting(false);
+    }
+  };
+
+  const handleAskCodeAI = async (mode: 'explain' | 'bugs' | 'optimize' | 'edge_cases') => {
+    if (isAiLoading) return;
+    setIsAiLoading(true);
+    setAiAnalysis(null);
+    try {
+      const response = await api.askCodeAI(mode, language, code, selectedProblem?.description);
+      setAiAnalysis(response);
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <Code2 className="text-indigo-400" size={24} />
+            <h1 className="text-2xl font-extrabold text-[#F8FAFC]">Coding Lab & IDE</h1>
+          </div>
+          <p className="text-xs text-[#94A3B8] mt-1">
+            Sandboxed execution environment for C, Python & JavaScript with automated test runner.
+          </p>
+        </div>
+
+        {/* Language Selector & Action Buttons */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-[#151923] border border-[#232936] rounded-lg p-1">
+            {(['javascript', 'python', 'c'] as const).map(lang => (
+              <button
+                key={lang}
+                onClick={() => handleLanguageChange(lang)}
+                className={`px-3 py-1 rounded text-xs font-mono font-semibold uppercase transition-all ${
+                  language === lang
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'text-[#94A3B8] hover:text-[#F8FAFC]'
+                }`}
+              >
+                {lang === 'javascript' ? 'JS' : lang}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={handleRunCode}
+            disabled={isExecuting}
+            className="flex items-center gap-1.5 px-4 py-2 bg-[#1C2230] hover:bg-[#232936] text-[#F8FAFC] border border-[#232936] rounded-lg text-xs font-semibold transition-all"
+          >
+            {isExecuting ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} className="fill-white" />}
+            <span>Run Code</span>
+          </button>
+
+          <button
+            onClick={handleSubmitProblem}
+            disabled={isExecuting}
+            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold shadow-md shadow-emerald-600/30 transition-all"
+          >
+            {isExecuting ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={14} />}
+            <span>Submit Solution</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main 2-Column IDE Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Problem Catalog & Statement (5 cols) */}
+        <div className="lg:col-span-5 space-y-4">
+          {/* Problem Selector Pills */}
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {problems.map(p => (
+              <button
+                key={p.id}
+                onClick={() => handleSelectProblem(p.slug)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                  selectedProblem?.slug === p.slug
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                    : 'bg-[#151923] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232936]'
+                }`}
+              >
+                {p.title}
+              </button>
+            ))}
+          </div>
+
+          {/* Problem Description Card */}
+          {selectedProblem && (
+            <div className="bg-[#151923] border border-[#232936] rounded-xl p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+              <div className="flex items-center justify-between pb-3 border-b border-[#232936]">
+                <h2 className="text-base font-bold text-[#F8FAFC]">{selectedProblem.title}</h2>
+                <Badge variant={selectedProblem.difficulty === 'Easy' ? 'success' : selectedProblem.difficulty === 'Medium' ? 'warning' : 'danger'}>
+                  {selectedProblem.difficulty}
+                </Badge>
+              </div>
+
+              <div className="text-xs text-[#94A3B8] leading-relaxed whitespace-pre-line font-sans">
+                {selectedProblem.description}
+              </div>
+
+              {/* Sample I/O */}
+              <div className="space-y-2">
+                <div className="text-xs font-semibold text-[#F8FAFC]">Sample Input:</div>
+                <div className="p-2.5 rounded-lg bg-[#0B0D12] border border-[#232936] font-mono text-xs text-indigo-300">
+                  {selectedProblem.sampleInput}
+                </div>
+                <div className="text-xs font-semibold text-[#F8FAFC]">Expected Output:</div>
+                <div className="p-2.5 rounded-lg bg-[#0B0D12] border border-[#232936] font-mono text-xs text-emerald-300">
+                  {selectedProblem.sampleOutput}
+                </div>
+              </div>
+
+              {/* Constraints */}
+              {selectedProblem.constraints && (
+                <div className="space-y-1.5 pt-2 border-t border-[#232936]">
+                  <div className="text-xs font-semibold text-[#94A3B8]">Constraints:</div>
+                  <ul className="list-disc pl-4 space-y-1 text-xs text-[#94A3B8]/80 font-mono">
+                    {selectedProblem.constraints.map((c, i) => (
+                      <li key={i}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Code Editor & Execution Console (7 cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          {/* Editor Header with AI assist shortcuts */}
+          <div className="bg-[#151923] border border-[#232936] rounded-xl p-3 flex flex-wrap items-center justify-between gap-2">
+            <div className="text-xs font-mono text-[#94A3B8] flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
+              <span>Editor • {language.toUpperCase()}</span>
+            </div>
+
+            {/* AI Action Buttons */}
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => handleAskCodeAI('explain')}
+                className="px-2.5 py-1 bg-[#0B0D12] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232936] rounded text-[11px] font-medium flex items-center gap-1"
+              >
+                <Sparkles size={11} className="text-indigo-400" />
+                <span>Explain</span>
+              </button>
+              <button
+                onClick={() => handleAskCodeAI('bugs')}
+                className="px-2.5 py-1 bg-[#0B0D12] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232936] rounded text-[11px] font-medium flex items-center gap-1"
+              >
+                <Bug size={11} className="text-rose-400" />
+                <span>Find Bugs</span>
+              </button>
+              <button
+                onClick={() => handleAskCodeAI('optimize')}
+                className="px-2.5 py-1 bg-[#0B0D12] hover:bg-[#1C2230] text-[#94A3B8] hover:text-[#F8FAFC] border border-[#232936] rounded text-[11px] font-medium flex items-center gap-1"
+              >
+                <Zap size={11} className="text-amber-400" />
+                <span>Optimize</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Code Textarea / Editor */}
+          <div className="relative">
+            <textarea
+              rows={14}
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              className="w-full bg-[#0B0D12] border border-[#232936] rounded-xl p-4 font-mono text-xs sm:text-sm text-[#F8FAFC] leading-relaxed focus:outline-none focus:border-indigo-500 shadow-inner"
+              spellCheck={false}
+            />
+          </div>
+
+          {/* AI Code Review Box */}
+          {aiAnalysis && (
+            <div className="p-4 rounded-xl bg-[#0B0D12] border border-indigo-500/30 space-y-2 max-h-64 overflow-y-auto">
+              <div className="flex items-center justify-between text-xs font-semibold text-indigo-400">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles size={14} /> AI Code Analysis
+                </span>
+                <button onClick={() => setAiAnalysis(null)} className="text-[10px] text-[#94A3B8]">Close</button>
+              </div>
+              <div className="text-xs text-[#F8FAFC] leading-relaxed whitespace-pre-line font-sans">
+                {aiAnalysis}
+              </div>
+            </div>
+          )}
+
+          {/* Execution Console Output */}
+          <div className="bg-[#151923] border border-[#232936] rounded-xl p-4 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-[#232936]">
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#F8FAFC]">
+                <Terminal size={14} className="text-indigo-400" />
+                <span>Execution Output Console</span>
+              </div>
+              {executionOutput && (
+                <div className="text-[11px] font-mono text-[#94A3B8] flex items-center gap-2">
+                  <span>{executionOutput.executionTimeMs}ms</span>
+                  <span>•</span>
+                  <span>Exit Code {executionOutput.exitCode}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Test Cases Result */}
+            {testEvaluation && (
+              <div className="space-y-2">
+                <div className={`p-3 rounded-lg text-xs font-semibold flex items-center justify-between ${
+                  testEvaluation.allPassed 
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' 
+                    : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                }`}>
+                  <span className="flex items-center gap-1.5">
+                    {testEvaluation.allPassed ? <CheckCircle2 size={15} /> : <XCircle size={15} />}
+                    {testEvaluation.allPassed ? 'Accepted! All test cases passed.' : 'Wrong Answer or Runtime Error'}
+                  </span>
+                  <span>{testEvaluation.passedTests} / {testEvaluation.totalTests} Passed</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  {testEvaluation.results.map((r: any, idx: number) => (
+                    <div key={idx} className="p-2 rounded bg-[#0B0D12] border border-[#232936] text-[11px] font-mono flex items-center justify-between">
+                      <span className="text-[#94A3B8]">Test {r.testIndex}: {r.isHidden ? '(Hidden Case)' : r.input}</span>
+                      <span className={r.passed ? 'text-emerald-400' : 'text-rose-400'}>
+                        {r.passed ? 'PASSED' : 'FAILED'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Standard Output */}
+            {executionOutput && (
+              <pre className="p-3 rounded-lg bg-[#0B0D12] border border-[#232936] font-mono text-xs text-[#F8FAFC] max-h-36 overflow-y-auto whitespace-pre-wrap">
+                {executionOutput.stdout || (executionOutput.stderr ? `Error: ${executionOutput.stderr}` : '(No output written to stdout)')}
+              </pre>
+            )}
+
+            {!executionOutput && !testEvaluation && (
+              <div className="text-xs text-[#94A3B8]/60 py-3 text-center italic">
+                Press "Run Code" to execute or "Submit Solution" to test against hidden constraints.
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

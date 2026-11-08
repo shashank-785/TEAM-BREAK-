@@ -1,0 +1,32 @@
+{
+  "name": "learnos-monorepo",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "LearnOS — AI-Powered Autonomous Student Learning & Career Development Platform",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "dev:client": "npm run dev --prefix client",
+    "dev:server": "npm run dev --prefix server",
+    "dev": "npm run dev:server & npm run dev:client",
+    "build:client": "npm run build --prefix client",
+    "build:server": "npm run build --prefix server",
+    "build": "npm run build:client && npm run build:server",
+    "test:client": "npm run test --prefix client",
+    "test:server": "npm run test --prefix server",
+    "test": "npm run test:server && npm run test:client",
+    "pack-zips": "node scripts/pack.js"
+  },
+  "keywords": [
+    "learnos",
+    "ai-education",
+    "learning-platform",
+    "career-development",
+    "edtech"
+  ],
+  "author": "LearnOS Autonomous Engineering Team",
+  "license": "MIT"
+}

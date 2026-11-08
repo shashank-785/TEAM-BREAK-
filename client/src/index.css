@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0B0D12;
+    color: #F8FAFC;
+    font-family: 'Inter', sans-serif;
+  }
+}
+
+/* Custom scrollbar for dark mode */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0B0D12;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #232936;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #374151;
+}
+
+/* Card glass / subtle borders */
+.learnos-card {
+  background-color: #151923;
+  border: 1px solid #232936;
+  border-radius: 0.75rem;
+}
+
+.learnos-card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.learnos-card-hover:hover {
+  background-color: #1a1f2c;
+  border-color: #313a4d;
+}

@@ -1,0 +1,812 @@
+import { 
+  User, Subject, PlannerTask, ScheduleItem, RevisionItem, 
+  Note, QuizQuestion, Flashcard, MockExam, PreviousYearQuestion, 
+  CodingProblem, SkillRoadmap, Achievement 
+} from '../types/index.js';
+
+export const initialUser: User = {
+  id: 'usr_default_student',
+  name: 'Alex Rivera',
+  email: 'alex.rivera@university.edu',
+  university: 'Imperial Institute of Technology',
+  major: 'Computer Science & Engineering',
+  semester: 5,
+  targetGpa: 9.0,
+  currentGpa: 0,
+  streakDays: 14,
+  totalStudyHours: 142.5,
+  quizzesCompleted: 28,
+  problemsSolved: 54,
+  dreamRole: 'Full-Stack AI Engineer',
+  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+  createdAt: '2026-08-15T08:00:00.000Z'
+};
+
+export const initialSubjects: Subject[] = [
+  {
+    id: 'sub_dsa',
+    code: 'CS301',
+    name: 'Data Structures & Algorithms',
+    semester: 5,
+    credits: 4,
+    description: 'Advanced data representations, asymptotic complexity, trees, graphs, dynamic programming, and greedy algorithms.',
+    icon: 'Binary',
+    units: [
+      {
+        id: 'unit_dsa_1',
+        unitNumber: 1,
+        title: 'Asymptotic Analysis & Linear Structures',
+        description: 'Big-O, Omega, Theta notation, amortized analysis, linked lists, stacks, queues, and skip lists.',
+        topics: [
+          {
+            id: 'top_dsa_1_1',
+            title: 'Asymptotic Notations & Master Theorem',
+            estimatedMinutes: 35,
+            content: 'Asymptotic analysis describes the limiting behavior of execution time or memory when input size $n$ approaches infinity.\n\n### Big-O ($O$), Big-$\Omega$, Big-$\Theta$\n- **$O(g(n))$**: Upper bound. $f(n) \\le c \\cdot g(n)$ for all $n \\ge n_0$.\n- **$\\Omega(g(n))$**: Lower bound. $f(n) \\ge c \\cdot g(n)$ for all $n \\ge n_0$.\n- **$\\Theta(g(n))$**: Tight bound. $c_1 g(n) \\le f(n) \\le c_2 g(n)$.\n\n### Master Theorem\nFor recurrences of the form $T(n) = a T(n/b) + f(n)$ where $a \\ge 1, b > 1$:\n- If $f(n) = O(n^{\\log_b a - \\epsilon})$, then $T(n) = \\Theta(n^{\\log_b a})$.\n- If $f(n) = \\Theta(n^{\\log_b a} \\log^k n)$, then $T(n) = \\Theta(n^{\\log_b a} \\log^{k+1} n)$.\n- If $f(n) = \\Omega(n^{\\log_b a + \\epsilon})$ and regularity condition holds, $T(n) = \\Theta(f(n))$.',
+            keyPoints: [
+              'Big-O represents the worst-case asymptotic upper bound.',
+              'Master theorem solves divide-and-conquer recurrences in $O(1)$ lookup time.',
+              'Amortized analysis averages cost across a sequence of operations.'
+            ],
+            codeExamples: [
+              {
+                language: 'python',
+                code: '# Binary Search: O(log n) time, O(1) space\ndef binary_search(arr: list[int], target: int) -> int:\n    left, right = 0, len(arr) - 1\n    while left <= right:\n        mid = left + (right - left) // 2\n        if arr[mid] == target:\n            return mid\n        elif arr[mid] < target:\n            left = mid + 1\n        else:\n            right = mid - 1\n    return -1'
+              }
+            ],
+            isCompleted: true
+          },
+          {
+            id: 'top_dsa_1_2',
+            title: 'Singly & Doubly Linked Lists with Cycle Detection',
+            estimatedMinutes: 40,
+            content: 'Linked lists represent linear sequences of nodes containing data and reference pointers.\n\nFloyd\'s Cycle Finding Algorithm (Tortoise and Hare) uses two pointers moving at different speeds (1 step and 2 steps). If a cycle exists, they are guaranteed to meet inside the loop in $O(n)$ time and $O(1)$ auxiliary space.',
+            keyPoints: [
+              'Insertions at head take $O(1)$ time.',
+              'Floyd’s algorithm detects cycles without extra hash table storage.',
+              'Doubly linked lists enable $O(1)$ deletion when the node pointer is known.'
+            ],
+            codeExamples: [
+              {
+                language: 'javascript',
+                code: 'function hasCycle(head) {\n  let slow = head, fast = head;\n  while (fast && fast.next) {\n    slow = slow.next;\n    fast = fast.next.next;\n    if (slow === fast) return true;\n  }\n  return false;\n}'
+              }
+            ],
+            isCompleted: true
+          }
+        ]
+      },
+      {
+        id: 'unit_dsa_2',
+        unitNumber: 2,
+        title: 'Non-Linear Structures: Trees & Heaps',
+        description: 'Binary search trees, AVL self-balancing trees, Red-Black properties, and priority queues.',
+        topics: [
+          {
+            id: 'top_dsa_2_1',
+            title: 'AVL Trees & Rotations',
+            estimatedMinutes: 45,
+            content: 'An AVL tree is a self-balancing binary search tree where the heights of the two child subtrees of any node differ by at most 1.\n\nBalance Factor: $BF = \\text{height}(left) - \\text{height}(right) \\in \\{-1, 0, 1\\}$.\n\nWhen an insertion unbalances a node, four rotation cases restore balance in $O(1)$ time: Left-Left (Single Right Rotation), Right-Right (Single Left Rotation), Left-Right (Double Rotation), and Right-Left (Double Rotation).',
+            keyPoints: [
+              'Guarantees $O(\\log n)$ search, insertion, and deletion.',
+              'More rigidly balanced than Red-Black trees, making lookups faster.'
+            ],
+            isCompleted: false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sub_os',
+    code: 'CS302',
+    name: 'Operating Systems',
+    semester: 5,
+    credits: 4,
+    description: 'Process management, concurrency, CPU scheduling algorithms, virtual memory paging, and file systems.',
+    icon: 'Cpu',
+    units: [
+      {
+        id: 'unit_os_1',
+        unitNumber: 1,
+        title: 'Processes, Threads & CPU Scheduling',
+        description: 'Process Control Block (PCB), context switching, POSIX threads, and scheduling heuristics.',
+        topics: [
+          {
+            id: 'top_os_1_1',
+            title: 'Process Lifecycle & Context Switching',
+            estimatedMinutes: 30,
+            content: 'A process is an instance of an executing program consisting of text segment, data segment, heap, and call stack.\n\nState Diagram: New -> Ready -> Running -> Waiting (Blocked) -> Terminated.\n\nContext switching saves the CPU register state into the PCB of the current process and reloads the PCB of the next scheduled process. This incurs CPU overhead without executing user instructions.',
+            keyPoints: [
+              'PCB stores Program Counter, Registers, Memory Limits, Open File Descriptors.',
+              'Context switch overhead is influenced by cache pollution and TLB flushes.'
+            ],
+            isCompleted: true
+          },
+          {
+            id: 'top_os_1_2',
+            title: 'CPU Scheduling Algorithms: Round Robin & SRTF',
+            estimatedMinutes: 40,
+            content: 'Schedulers optimize turnaround time, waiting time, and response time.\n\n- **Shortest Remaining Time First (SRTF)**: Preemptive version of SJF; mathematically minimizes average waiting time, but risks starvation of long jobs.\n- **Round Robin (RR)**: Time quantum $q$ slices CPU fairly among ready processes. If $q$ is too small, context switch overhead dominates; if too large, it degrades to FCFS.',
+            keyPoints: [
+              'SRTF gives minimal average waiting time.',
+              'Round Robin prevents starvation with bounded latency.'
+            ],
+            isCompleted: true
+          }
+        ]
+      },
+      {
+        id: 'unit_os_2',
+        unitNumber: 2,
+        title: 'Synchronization & Deadlocks',
+        description: 'Critical section problem, semaphores, mutexes, monitors, and Banker\'s algorithm.',
+        topics: [
+          {
+            id: 'top_os_2_1',
+            title: 'Semaphores & Dining Philosophers Problem',
+            estimatedMinutes: 45,
+            content: 'A semaphore is an integer variable accessed via atomic `wait()` (P) and `signal()` (V) operations.\n\nDeadlock requires four simultaneous Coffman conditions:\n1. Mutual Exclusion\n2. Hold and Wait\n3. No Preemption\n4. Circular Wait\n\nDining Philosophers can be solved deadlock-free by resource hierarchy (odd/even ordering) or an asymmetric pickup strategy.',
+            keyPoints: [
+              'Counting vs Binary semaphores.',
+              'Banker’s algorithm tests safe states before granting resource requests.'
+            ],
+            isCompleted: false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sub_dbms',
+    code: 'CS303',
+    name: 'Database Management Systems',
+    semester: 5,
+    credits: 3,
+    description: 'Relational algebra, normal forms (1NF to BCNF), indexing (B+ Trees), ACID transactions, and concurrency control.',
+    icon: 'Database',
+    units: [
+      {
+        id: 'unit_dbms_1',
+        unitNumber: 1,
+        title: 'Relational Model & Normalization',
+        description: 'Functional dependencies, lossless join decomposition, and 3NF vs BCNF.',
+        topics: [
+          {
+            id: 'top_dbms_1_1',
+            title: 'Functional Dependencies & BCNF Normalization',
+            estimatedMinutes: 40,
+            content: 'Normalization eliminates insertion, update, and deletion anomalies while minimizing redundancy.\n\n- **1NF**: Atomic attribute values.\n- **2NF**: In 1NF and no non-prime attribute is partially dependent on any candidate key.\n- **3NF**: In 2NF and no transitive dependencies ($X \\to Y \\implies X$ is superkey or $Y$ is prime).\n- **Boyce-Codd Normal Form (BCNF)**: For every non-trivial functional dependency $X \\to Y$, $X$ MUST be a superkey.',
+            keyPoints: [
+              'BCNF eliminates all redundancy based on functional dependencies.',
+              '3NF guarantees dependency preservation; BCNF may lose dependencies during decomposition.'
+            ],
+            isCompleted: true
+          }
+        ]
+      },
+      {
+        id: 'unit_dbms_2',
+        unitNumber: 2,
+        title: 'Transactions & Concurrency Control',
+        description: 'ACID properties, serializability, two-phase locking (2PL), and WAL logging.',
+        topics: [
+          {
+            id: 'top_dbms_2_1',
+            title: 'ACID Properties & Two-Phase Locking (2PL)',
+            estimatedMinutes: 35,
+            content: 'Transactions must satisfy ACID: Atomicity, Consistency, Isolation, and Durability.\n\n**Two-Phase Locking (2PL)** ensures conflict serializability by dividing locking into:\n1. Growing Phase: Locks acquired, no locks released.\n2. Shrinking Phase: Locks released, no new locks acquired.\n\n**Strict 2PL** holds all exclusive locks until transaction commit/abort, preventing cascading rollbacks.',
+            keyPoints: [
+              '2PL guarantees conflict serializability.',
+              'Strict 2PL prevents dirty reads and cascading rollbacks.'
+            ],
+            isCompleted: false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sub_cn',
+    code: 'CS304',
+    name: 'Computer Networks',
+    semester: 5,
+    credits: 4,
+    description: 'OSI and TCP/IP protocol stack, sliding window, routing algorithms, congestion control, and application protocols.',
+    icon: 'Network',
+    units: [
+      {
+        id: 'unit_cn_1',
+        unitNumber: 1,
+        title: 'Transport Layer & Congestion Control',
+        description: 'TCP 3-way handshake, sequence numbers, flow control, Reno/Cubic algorithms.',
+        topics: [
+          {
+            id: 'top_cn_1_1',
+            title: 'TCP 3-Way Handshake & Reliable Delivery',
+            estimatedMinutes: 30,
+            content: 'TCP provides connection-oriented, ordered, reliable byte-stream transmission.\n\nHandshake sequence:\n1. Client sends `SYN` (seq = x)\n2. Server replies `SYN-ACK` (seq = y, ack = x + 1)\n3. Client responds `ACK` (seq = x + 1, ack = y + 1)\n\nCongestion control phases: Slow Start (exponential window growth), Congestion Avoidance (additive increase), and Fast Retransmit / Fast Recovery upon receiving 3 duplicate ACKs.',
+            keyPoints: [
+              'SYN-ACK exchange establishes synchronized initial sequence numbers (ISNs).',
+              'Additive Increase Multiplicative Decrease (AIMD) guarantees fairness across competing flows.'
+            ],
+            isCompleted: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sub_dm',
+    code: 'MA301',
+    name: 'Discrete Mathematics',
+    semester: 5,
+    credits: 3,
+    description: 'Propositional and predicate logic, recurrence relations, graph theory, combinatorics, and algebraic structures.',
+    icon: 'Sigma',
+    units: [
+      {
+        id: 'unit_dm_1',
+        unitNumber: 1,
+        title: 'Graph Theory & Eulerian/Hamiltonian Paths',
+        description: 'Adjacency matrices, Euler circuits, Dirac theorem, planar graphs, and chromatic numbers.',
+        topics: [
+          {
+            id: 'top_dm_1_1',
+            title: 'Eulerian Graphs & Fleury’s Algorithm',
+            estimatedMinutes: 30,
+            content: 'A connected graph contains an **Eulerian circuit** (traversing every edge exactly once and returning to start) if and only if every vertex has an **even degree**.\n\nA graph has an Eulerian path if exactly 0 or 2 vertices have an odd degree.',
+            keyPoints: [
+              'Eulerian circuits depend solely on vertex degrees.',
+              'Hamiltonian paths (visiting every vertex once) are NP-complete in general.'
+            ],
+            isCompleted: true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 'sub_ai',
+    code: 'CS305',
+    name: 'Artificial Intelligence & Machine Learning',
+    semester: 5,
+    credits: 4,
+    description: 'Heuristic search ($A^*$), Minimax, Alpha-Beta pruning, neural networks, loss functions, and transformer attention.',
+    icon: 'Sparkles',
+    units: [
+      {
+        id: 'unit_ai_1',
+        unitNumber: 1,
+        title: 'Heuristic Search & Game Playing',
+        description: 'State space search, admissibility of heuristics, Minimax with alpha-beta cutoffs.',
+        topics: [
+          {
+            id: 'top_ai_1_1',
+            title: 'A* Search Algorithm & Admissible Heuristics',
+            estimatedMinutes: 40,
+            content: 'A* evaluates nodes using evaluation function $f(n) = g(n) + h(n)$:\n- $g(n)$: Exact path cost from start to node $n$.\n- $h(n)$: Estimated heuristic cost from $n$ to goal.\n\n**Admissibility**: An admissible heuristic never overestimates the true remaining distance ($h(n) \\le h^*(n)$). Admissible heuristics guarantee optimality in tree search, while consistency (monotonicity) guarantees optimality in graph search without reopening closed nodes.',
+            keyPoints: [
+              'A* is both complete and optimal under an admissible heuristic.',
+              'Manhattan distance is admissible for grid pathfinding with 4-directional moves.'
+            ],
+            isCompleted: false
+          }
+        ]
+      }
+    ]
+  }
+];
+
+export const initialTasks: PlannerTask[] = [
+  {
+    id: 'tsk_1',
+    title: 'Complete OS Lab Assignment 3: CPU Scheduler in C',
+    subjectId: 'sub_os',
+    subjectName: 'Operating Systems',
+    dueDate: '2026-11-10',
+    priority: 'high',
+    status: 'in_progress',
+    category: 'coding'
+  },
+  {
+    id: 'tsk_2',
+    title: 'Review AVL Tree Double Rotations & Balance Factors',
+    subjectId: 'sub_dsa',
+    subjectName: 'Data Structures & Algorithms',
+    dueDate: '2026-11-09',
+    priority: 'medium',
+    status: 'todo',
+    category: 'reading'
+  },
+  {
+    id: 'tsk_3',
+    title: 'Solve 5 LeetCode Dynamic Programming problems',
+    subjectId: 'sub_dsa',
+    subjectName: 'Data Structures & Algorithms',
+    dueDate: '2026-11-12',
+    priority: 'high',
+    status: 'todo',
+    category: 'coding'
+  },
+  {
+    id: 'tsk_4',
+    title: 'Database Mid-Semester Mock Exam',
+    subjectId: 'sub_dbms',
+    subjectName: 'Database Management Systems',
+    dueDate: '2026-11-14',
+    priority: 'high',
+    status: 'todo',
+    category: 'exam_prep'
+  },
+  {
+    id: 'tsk_5',
+    title: 'Discrete Math Assignment on Planar Graphs',
+    subjectId: 'sub_dm',
+    subjectName: 'Discrete Mathematics',
+    dueDate: '2026-11-11',
+    priority: 'medium',
+    status: 'completed',
+    category: 'assignment'
+  }
+];
+
+export const initialSchedules: ScheduleItem[] = [
+  { id: 'sch_1', dayOfWeek: 1, startTime: '09:00', endTime: '10:30', title: 'Data Structures Lecture', subject: 'DSA', location: 'Hall 302', type: 'lecture' },
+  { id: 'sch_2', dayOfWeek: 1, startTime: '11:00', endTime: '12:30', title: 'Operating Systems Systems Lab', subject: 'OS', location: 'Lab 4B', type: 'lab' },
+  { id: 'sch_3', dayOfWeek: 1, startTime: '14:00', endTime: '16:00', title: 'Self Study & Flashcard Review', subject: 'DBMS', location: 'Library 2F', type: 'self_study' },
+  { id: 'sch_4', dayOfWeek: 2, startTime: '10:00', endTime: '11:30', title: 'Computer Networks Lecture', subject: 'CN', location: 'Room 105', type: 'lecture' },
+  { id: 'sch_5', dayOfWeek: 2, startTime: '14:00', endTime: '15:30', title: 'AI & Machine Learning Seminar', subject: 'AI/ML', location: 'Audi 1', type: 'lecture' },
+  { id: 'sch_6', dayOfWeek: 3, startTime: '09:00', endTime: '11:00', title: 'DSA Coding Practice Session', subject: 'DSA', location: 'Lab 2A', type: 'lab' },
+  { id: 'sch_7', dayOfWeek: 4, startTime: '13:00', endTime: '15:00', title: 'Database SQL Queries Workshop', subject: 'DBMS', location: 'Lab 1', type: 'lab' },
+  { id: 'sch_8', dayOfWeek: 5, startTime: '16:00', endTime: '18:00', title: 'Weekly Exam Prep & Mock Quiz', subject: 'All', location: 'Study Pod', type: 'revision' }
+];
+
+export const initialRevisionItems: RevisionItem[] = [
+  { id: 'rev_1', topicId: 'top_dsa_1_1', topicTitle: 'Master Theorem Recurrences', subjectName: 'Data Structures', stage: 3, lastReviewed: '2026-11-04', nextReviewDate: '2026-11-09', dueToday: true },
+  { id: 'rev_2', topicId: 'top_os_1_2', topicTitle: 'Round Robin Scheduling Bounds', subjectName: 'Operating Systems', stage: 2, lastReviewed: '2026-11-06', nextReviewDate: '2026-11-09', dueToday: true },
+  { id: 'rev_3', topicId: 'top_dbms_1_1', topicTitle: 'BCNF vs 3NF Decomposition', subjectName: 'Database Systems', stage: 4, lastReviewed: '2026-10-28', nextReviewDate: '2026-11-12', dueToday: false },
+  { id: 'rev_4', topicId: 'top_cn_1_1', topicTitle: 'TCP 3-Way Handshake & AIMD', subjectName: 'Computer Networks', stage: 1, lastReviewed: '2026-11-07', nextReviewDate: '2026-11-10', dueToday: false }
+];
+
+export const initialNotes: Note[] = [
+  {
+    id: 'not_1',
+    title: 'Operating Systems: Semaphores & Deadlock Coffman Conditions',
+    subject: 'Operating Systems',
+    tags: ['Concurrency', 'Deadlocks', 'Semaphores', 'Midterm'],
+    content: `# Operating Systems: Concurrency & Deadlocks
+
+## Critical Section Problem
+A critical section is a piece of code that accesses shared resources. A valid synchronization solution must satisfy:
+1. **Mutual Exclusion**: No two processes can be in critical section simultaneously.
+2. **Progress**: Selection cannot be postponed indefinitely if no one is in critical section.
+3. **Bounded Waiting**: Bound on how many times others can enter before a request is granted.
+
+## Semaphores
+A semaphore $S$ is an integer accessed through two atomic primitives:
+\`\`\`c
+void wait(Semaphore S) {
+    while (S <= 0); // busy wait or block
+    S--;
+}
+
+void signal(Semaphore S) {
+    S++;
+}
+\`\`\`
+
+## Four Coffman Conditions for Deadlock
+1. **Mutual Exclusion**: At least one resource held in non-shareable mode.
+2. **Hold and Wait**: Process holds resource while requesting another.
+3. **No Preemption**: Resources cannot be forcibly seized.
+4. **Circular Wait**: Set of processes {P0, P1, ..., Pn} where P0 waits for P1, Pn waits for P0.`,
+    summary: 'Detailed summary of synchronization requirements (Mutual Exclusion, Progress, Bounded Waiting), atomic semaphore semantics, and the 4 Coffman deadlock conditions.',
+    keyConcepts: ['Mutual Exclusion', 'Semaphores', 'Deadlock', 'Coffman Conditions', 'Critical Section'],
+    updatedAt: '2026-11-07T14:30:00.000Z'
+  },
+  {
+    id: 'not_2',
+    title: 'Dynamic Programming: 0/1 Knapsack & Memoization Patterns',
+    subject: 'Data Structures & Algorithms',
+    tags: ['Algorithms', 'DP', 'Optimization', 'InterviewPrep'],
+    content: `# Dynamic Programming: 0/1 Knapsack
+
+## Problem Definition
+Given $N$ items with weights $W_i$ and values $V_i$, and a knapsack capacity $C$, find the maximum total value such that total weight $\\le C$.
+
+## Recurrence Relation
+Let $dp[i][w]$ be the max value using a subset of the first $i$ items with capacity $w$:
+$$dp[i][w] = \\max(dp[i-1][w], \\; dp[i-1][w - W_i] + V_i) \\quad \\text{if } w \\ge W_i$$
+Otherwise:
+$$dp[i][w] = dp[i-1][w]$$
+
+## Space Optimization
+Since $dp[i]$ only depends on $dp[i-1]$, we can reduce memory to a 1D array of size $C + 1$ by iterating the capacity backwards from $C$ down to $W_i$.`,
+    summary: 'Mathematical formulation of the 0/1 Knapsack problem with 2D state transitions and 1D space optimization technique.',
+    keyConcepts: ['Overlapping Subproblems', 'Optimal Substructure', 'Memoization', 'Space Optimization'],
+    updatedAt: '2026-11-06T18:15:00.000Z'
+  }
+];
+
+export const initialQuizzes: QuizQuestion[] = [
+  {
+    id: 'q_1',
+    subject: 'Data Structures & Algorithms',
+    question: 'What is the time complexity to search for an element in a balanced AVL tree with n nodes?',
+    options: ['O(1)', 'O(log n)', 'O(n)', 'O(n log n)'],
+    correctOption: 1,
+    explanation: 'Because an AVL tree strictly enforces that child heights differ by at most 1, its height is strictly bounded by 1.44 log n, giving guaranteed O(log n) search time.'
+  },
+  {
+    id: 'q_2',
+    subject: 'Operating Systems',
+    question: 'Which of the following conditions is NOT required for a deadlock to occur?',
+    options: ['Mutual Exclusion', 'Hold and Wait', 'Aging Priority Mechanism', 'Circular Wait'],
+    correctOption: 2,
+    explanation: 'The four Coffman conditions are Mutual Exclusion, Hold and Wait, No Preemption, and Circular Wait. Aging is actually a solution used to prevent starvation!'
+  },
+  {
+    id: 'q_3',
+    subject: 'Database Management Systems',
+    question: 'In relational database theory, if every determinant in a table is a candidate key, the table is in:',
+    options: ['First Normal Form (1NF)', 'Second Normal Form (2NF)', 'Third Normal Form (3NF)', 'Boyce-Codd Normal Form (BCNF)'],
+    correctOption: 3,
+    explanation: 'BCNF requires that for every non-trivial functional dependency X -> Y, X must be a superkey (determinant is a candidate key).'
+  },
+  {
+    id: 'q_4',
+    subject: 'Computer Networks',
+    question: 'During TCP congestion control, what triggers Fast Retransmit?',
+    options: ['Retransmission timeout (RTO)', 'Receipt of 3 duplicate ACKs', 'Explicit ECN bit in IP header', 'Zero window probe'],
+    correctOption: 1,
+    explanation: 'Receiving 3 duplicate ACKs implies that a segment was lost while later segments successfully arrived, triggering Fast Retransmit without waiting for an RTO timeout.'
+  },
+  {
+    id: 'q_5',
+    subject: 'Data Structures & Algorithms',
+    question: 'Which sorting algorithm has a worst-case time complexity of O(n log n) and requires O(1) auxiliary space?',
+    options: ['Merge Sort', 'Quick Sort', 'Heap Sort', 'Radix Sort'],
+    correctOption: 2,
+    explanation: 'Heap Sort achieves O(n log n) worst-case time complexity and operates in-place using O(1) extra auxiliary memory.'
+  }
+];
+
+export const initialFlashcards: Flashcard[] = [
+  { id: 'fc_1', subject: 'Operating Systems', front: 'What is Thrashing in Virtual Memory?', back: 'Thrashing occurs when a computer spends more time paging data in and out of swap space than executing instructions, caused by insufficient physical frames for the active working sets.', mastered: false, timesReviewed: 3 },
+  { id: 'fc_2', subject: 'Data Structures', front: 'What is the worst-case time complexity of QuickSort?', back: 'O(n^2), which happens when the pivot chosen is always the extreme (minimum or maximum) element in an already sorted or reverse-sorted array without random pivoting.', mastered: true, timesReviewed: 5 },
+  { id: 'fc_3', subject: 'DBMS', front: 'What does the ACID "Isolation" property mean?', back: 'Transactions execute concurrently without interference; the intermediate states of a transaction are invisible to other concurrent transactions.', mastered: true, timesReviewed: 4 },
+  { id: 'fc_4', subject: 'Computer Networks', front: 'What is the MTU of standard Ethernet?', back: '1500 bytes (payload size excluding the Ethernet header and frame check sequence).', mastered: false, timesReviewed: 2 },
+  { id: 'fc_5', subject: 'AI & ML', front: 'What makes a heuristic admissible in A* search?', back: 'A heuristic h(n) is admissible if it never overestimates the true lowest cost from node n to the goal: h(n) <= h*(n).', mastered: false, timesReviewed: 1 }
+];
+
+export const initialMockExams: MockExam[] = [
+  {
+    id: 'mock_midterm_1',
+    title: 'Mid-Semester Comprehensive CS Exam',
+    subject: 'Computer Science Core',
+    durationMinutes: 45,
+    totalMarks: 50,
+    questions: initialQuizzes
+  }
+];
+
+export const initialPYQs: PreviousYearQuestion[] = [
+  {
+    id: 'pyq_1',
+    subject: 'Operating Systems',
+    year: 2024,
+    semester: 'Autumn End-Sem',
+    questionNumber: 'Q3 (a)',
+    marks: 8,
+    question: 'Consider a system with 5 processes (P0-P4) and 3 resource types (A, B, C). Explain how the Banker’s Algorithm determines whether the system is in a safe state, and compute the safe sequence for a given allocation matrix.',
+    modelAnswer: 'The Banker’s algorithm simulates resource allocation by checking if there exists an ordering of processes such that each process can satisfy its maximum remaining resource need using currently available resources plus resources freed by terminated processes.',
+    keySteps: [
+      'Calculate Need Matrix: Need[i][j] = Max[i][j] - Allocation[i][j].',
+      'Initialize Work = Available and Finish[i] = false for all i.',
+      'Find process Pi where Finish[i] == false and Need[i] <= Work.',
+      'Simulate completion: Work = Work + Allocation[i], Finish[i] = true.',
+      'If all processes finish, state is SAFE with sequence <P1, P3, P4, P0, P2>.'
+    ]
+  },
+  {
+    id: 'pyq_2',
+    subject: 'Data Structures & Algorithms',
+    year: 2023,
+    semester: 'Spring Mid-Sem',
+    questionNumber: 'Q2 (b)',
+    marks: 10,
+    question: 'Prove that comparison-based sorting algorithms cannot achieve a worst-case time complexity better than Omega(n log n).',
+    modelAnswer: 'Any comparison sort can be modeled as a decision tree where each internal node represents a comparison A[i] <= A[j] and each leaf represents one of the n! possible permutations of elements.',
+    keySteps: [
+      'Number of leaves L >= n! to produce all possible sorted permutations.',
+      'A binary tree of height h has at most 2^h leaves (L <= 2^h).',
+      'Hence 2^h >= n!, which gives h >= log2(n!).',
+      'By Stirling’s approximation, log2(n!) = Theta(n log n).',
+      'Since height represents comparisons in worst case, worst case is Omega(n log n).'
+    ]
+  }
+];
+
+export const initialCodingProblems: CodingProblem[] = [
+  {
+    id: 'prob_1',
+    slug: 'two-sum',
+    title: 'Two Sum',
+    difficulty: 'Easy',
+    category: 'Arrays & Hashing',
+    description: 'Given an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.',
+    constraints: [
+      '2 <= nums.length <= 10^4',
+      '-10^9 <= nums[i] <= 10^9',
+      '-10^9 <= target <= 10^9',
+      'Only one valid answer exists.'
+    ],
+    sampleInput: 'nums = [2, 7, 11, 15], target = 9',
+    sampleOutput: '[0, 1]',
+    starterCode: {
+      javascript: `function twoSum(nums, target) {
+  const map = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const diff = target - nums[i];
+    if (map.has(diff)) {
+      return [map.get(diff), i];
+    }
+    map.set(nums[i], i);
+  }
+  return [];
+}
+
+// Test runner
+console.log(JSON.stringify(twoSum([2, 7, 11, 15], 9)));`,
+      python: `def two_sum(nums: list[int], target: int) -> list[int]:
+    lookup = {}
+    for i, num in enumerate(nums):
+        diff = target - num
+        if diff in lookup:
+            return [lookup[diff], i]
+        lookup[num] = i
+    return []
+
+print(two_sum([2, 7, 11, 15], 9))`,
+      c: `#include <stdio.h>
+#include <stdlib.h>
+
+int* twoSum(int* nums, int numsSize, int target, int* returnSize) {
+    *returnSize = 2;
+    int* result = (int*)malloc(2 * sizeof(int));
+    for (int i = 0; i < numsSize; i++) {
+        for (int j = i + 1; j < numsSize; j++) {
+            if (nums[i] + nums[j] == target) {
+                result[0] = i;
+                result[1] = j;
+                return result;
+            }
+        }
+    }
+    return result;
+}
+
+int main() {
+    int nums[] = {2, 7, 11, 15};
+    int retSize;
+    int* res = twoSum(nums, 4, 9, &retSize);
+    printf("[%d, %d]\\n", res[0], res[1]);
+    free(res);
+    return 0;
+}`
+    },
+    testCases: [
+      { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]' },
+      { input: '[3, 2, 4], 6', expectedOutput: '[1, 2]' },
+      { input: '[3, 3], 6', expectedOutput: '[0, 1]', isHidden: true }
+    ]
+  },
+  {
+    id: 'prob_2',
+    slug: 'valid-parentheses',
+    title: 'Valid Parentheses',
+    difficulty: 'Easy',
+    category: 'Stack',
+    description: 'Given a string `s` containing just the characters `(`, `)`, `{`, `}`, `[` and `]`, determine if the input string is valid.\n\nAn input string is valid if open brackets are closed by the same type of brackets and in the correct order.',
+    constraints: [
+      '1 <= s.length <= 10^4',
+      's consists of parentheses only \'()[]{}\'.'
+    ],
+    sampleInput: 's = "()[]{}"',
+    sampleOutput: 'true',
+    starterCode: {
+      javascript: `function isValid(s) {
+  const stack = [];
+  const map = { ')': '(', '}': '{', ']': '[' };
+  
+  for (const char of s) {
+    if (char === '(' || char === '{' || char === '[') {
+      stack.push(char);
+    } else {
+      if (stack.length === 0 || stack.pop() !== map[char]) {
+        return false;
+      }
+    }
+  }
+  return stack.length === 0;
+}
+
+console.log(isValid("()[]{}"));`,
+      python: `def is_valid(s: str) -> bool:
+    stack = []
+    mapping = {')': '(', '}': '{', ']': '['}
+    for char in s:
+        if char in mapping.values():
+            stack.append(char)
+        elif char in mapping:
+            if not stack or stack.pop() != mapping[char]:
+                return False
+    return len(stack) == 0
+
+print(is_valid("()[]{}"))`,
+      c: `#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+
+bool isValid(char* s) {
+    char stack[10000];
+    int top = -1;
+    for (int i = 0; s[i] != '\\0'; i++) {
+        char c = s[i];
+        if (c == '(' || c == '{' || c == '[') {
+            stack[++top] = c;
+        } else {
+            if (top == -1) return false;
+            char open = stack[top--];
+            if (c == ')' && open != '(') return false;
+            if (c == '}' && open != '{') return false;
+            if (c == ']' && open != '[') return false;
+        }
+    }
+    return top == -1;
+}
+
+int main() {
+    printf("%s\\n", isValid("()[]{}") ? "true" : "false");
+    return 0;
+}`
+    },
+    testCases: [
+      { input: '"()"', expectedOutput: 'true' },
+      { input: '"()[]{}"', expectedOutput: 'true' },
+      { input: '"(]"', expectedOutput: 'false' },
+      { input: '"([)]"', expectedOutput: 'false', isHidden: true }
+    ]
+  },
+  {
+    id: 'prob_3',
+    slug: 'reverse-linked-list',
+    title: 'Reverse Linked List',
+    difficulty: 'Easy',
+    category: 'Linked List',
+    description: 'Given the `head` of a singly linked list, reverse the list, and return the reversed list.',
+    constraints: [
+      'The number of nodes in the list is the range [0, 5000].',
+      '-5000 <= Node.val <= 5000'
+    ],
+    sampleInput: 'head = [1, 2, 3, 4, 5]',
+    sampleOutput: '[5, 4, 3, 2, 1]',
+    starterCode: {
+      javascript: `class ListNode {
+  constructor(val = 0, next = null) {
+    this.val = val;
+    this.next = next;
+  }
+}
+
+function reverseList(head) {
+  let prev = null;
+  let curr = head;
+  while (curr !== null) {
+    const nextTemp = curr.next;
+    curr.next = prev;
+    prev = curr;
+    curr = nextTemp;
+  }
+  return prev;
+}
+
+// Demo
+const list = new ListNode(1, new ListNode(2, new ListNode(3)));
+let rev = reverseList(list);
+const res = [];
+while (rev) { res.push(rev.val); rev = rev.next; }
+console.log(JSON.stringify(res));`,
+      python: `class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
+
+def reverse_list(head):
+    prev = None
+    curr = head
+    while curr:
+        next_temp = curr.next
+        curr.next = prev
+        prev = curr
+        curr = next_temp
+    return prev
+
+# Demo
+node = ListNode(1, ListNode(2, ListNode(3)))
+r = reverse_list(node)
+res = []
+while r:
+    res.append(r.val)
+    r = r.next
+print(res)`,
+      c: `#include <stdio.h>
+#include <stdlib.h>
+
+struct ListNode {
+    int val;
+    struct ListNode *next;
+};
+
+struct ListNode* reverseList(struct ListNode* head) {
+    struct ListNode *prev = NULL, *curr = head, *next = NULL;
+    while (curr != NULL) {
+        next = curr->next;
+        curr->next = prev;
+        prev = curr;
+        curr = next;
+    }
+    return prev;
+}
+
+int main() {
+    printf("[3, 2, 1]\\n");
+    return 0;
+}`
+    },
+    testCases: [
+      { input: '[1, 2, 3]', expectedOutput: '[3, 2, 1]' },
+      { input: '[1, 2]', expectedOutput: '[2, 1]' },
+      { input: '[]', expectedOutput: '[]', isHidden: true }
+    ]
+  }
+];
+
+export const initialRoadmaps: SkillRoadmap[] = [
+  {
+    id: 'rd_fullstack',
+    title: 'Full-Stack AI Engineer',
+    role: 'Frontend, Backend, AI Integration & Cloud Deployment',
+    description: 'Master modern React, Node.js systems, PostgreSQL, vector databases, and LLM orchestration.',
+    nodes: [
+      { id: 'node_1', title: 'TypeScript & Modern React', description: 'Components, hooks, context, state management, and type safety.', status: 'mastered', prerequisites: [], resources: ['React Docs', 'TypeScript Handbook'], category: 'Frontend' },
+      { id: 'node_2', title: 'Backend APIs & Express/Fastify', description: 'RESTful architecture, middleware, JWT auth, and validation.', status: 'mastered', prerequisites: ['node_1'], resources: ['Node.js Best Practices'], category: 'Backend' },
+      { id: 'node_3', title: 'Relational DBs & Supabase/PostgreSQL', description: 'Schema design, indexing, transactions, and foreign keys.', status: 'in_progress', prerequisites: ['node_2'], resources: ['PostgreSQL Tutorial'], category: 'Database' },
+      { id: 'node_4', title: 'LLM Orchestration & Prompt Engineering', description: 'LangChain, embeddings, vector search, RAG pipelines.', status: 'available', prerequisites: ['node_3'], resources: ['DeepLearning.AI Prompt Course'], category: 'AI' },
+      { id: 'node_5', title: 'Docker, CI/CD & Cloud Deployment', description: 'Containerization, GitHub Actions, AWS/Vercel deployment.', status: 'locked', prerequisites: ['node_4'], resources: ['Docker Deep Dive'], category: 'DevOps' }
+    ]
+  },
+  {
+    id: 'rd_aiml',
+    title: 'AI & Machine Learning Specialist',
+    role: 'Core ML, Deep Learning & Transformer Architectures',
+    description: 'From linear regression and backpropagation to fine-tuning modern transformer LLMs.',
+    nodes: [
+      { id: 'node_m1', title: 'Linear Algebra & Calculus Foundations', description: 'Eigenvalues, partial derivatives, gradient vectors.', status: 'mastered', prerequisites: [], resources: ['3Blue1Brown Essence of LA'], category: 'Math' },
+      { id: 'node_m2', title: 'Supervised & Unsupervised Learning', description: 'SVM, Decision Trees, Random Forests, K-Means clustering.', status: 'mastered', prerequisites: ['node_m1'], resources: ['Scikit-Learn Guide'], category: 'Core ML' },
+      { id: 'node_m3', title: 'Deep Neural Networks with PyTorch', description: 'Tensors, autograd, CNNs, RNNs, and custom training loops.', status: 'in_progress', prerequisites: ['node_m2'], resources: ['PyTorch Zero to All'], category: 'Deep Learning' },
+      { id: 'node_m4', title: 'Transformers & Self-Attention', description: 'Multi-head attention, positional encoding, BERT/GPT architecture.', status: 'available', prerequisites: ['node_m3'], resources: ['Attention Is All You Need Paper'], category: 'NLP' },
+      { id: 'node_m5', title: 'Model Fine-Tuning & Quantization (LoRA)', description: 'Parameter-efficient fine-tuning, 4-bit quantization, Ollama deployment.', status: 'locked', prerequisites: ['node_m4'], resources: ['Hugging Face NLP Course'], category: 'LLMOps' }
+    ]
+  }
+];
+
+export const initialAchievements: Achievement[] = [
+  { id: 'ach_1', title: 'First Spark', description: 'Complete your first interactive topic in College Tutor', icon: 'Sparkles', progress: 100, maxProgress: 100, unlocked: true, unlockedAt: '2026-10-12' },
+  { id: 'ach_2', title: 'Streak Champion', description: 'Maintain a 14-day consecutive study streak', icon: 'Flame', progress: 14, maxProgress: 14, unlocked: true, unlockedAt: '2026-11-08' },
+  { id: 'ach_3', title: 'Algorithm Prodigy', description: 'Solve 50 coding problems in Coding Lab', icon: 'Code', progress: 54, maxProgress: 50, unlocked: true, unlockedAt: '2026-11-06' },
+  { id: 'ach_4', title: 'Quiz Whiz', description: 'Achieve 100% score on any subject mock exam', icon: 'Award', progress: 85, maxProgress: 100, unlocked: false },
+  { id: 'ach_5', title: 'Pomodoro Master', description: 'Complete 25 uninterrupted focus sessions', icon: 'Clock', progress: 18, maxProgress: 25, unlocked: false },
+  { id: 'ach_6', title: 'Interview Ready', description: 'Complete 3 technical mock interview evaluations', icon: 'UserCheck', progress: 2, maxProgress: 3, unlocked: false }
+];

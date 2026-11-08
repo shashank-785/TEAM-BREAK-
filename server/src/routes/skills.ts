@@ -1,0 +1,88 @@
+import { Router, Request, Response } from 'express';
+import { db } from '../db/db.js';
+import { aiService } from '../services/aiService.js';
+import { MockInterviewSession } from '../types/index.js';
+
+const router = Router();
+
+// Get skill roadmaps
+router.get('/roadmaps', (req: Request, res: Response) => {
+  res.json({ success: true, roadmaps: db.getRoadmaps() });
+});
+
+// Update skill node status (unlock or master)
+router.post('/roadmaps/:roadmapId/nodes/:nodeId/status', (req: Request, res: Response) => {
+  const { roadmapId, nodeId } = req.params;
+  const { status } = req.body; // 'locked' | 'available' | 'in_progress' | 'mastered'
+  const ok = db.updateSkillNode(roadmapId, nodeId, status);
+  res.json({ success: ok });
+});
+
+// Start a new mock interview session
+router.post('/interview/start', async (req: Request, res: Response) => {
+  const { role, level } = req.body; // e.g. role: 'Frontend Engineer', level: 'Junior/Intern'
+  const targetRole = role || 'Full-Stack Software Engineer';
+  const targetLevel = level || 'Undergraduate Internship';
+
+  const initialQuestions: Record<string, string> = {
+    'Frontend Engineer': "Welcome to your technical interview for Frontend Engineer! Let's start with state and rendering: Can you explain how the React Virtual DOM diffing algorithm works, and why using array indices as `key` props can cause rendering bugs?",
+    'Backend Engineer': "Welcome! Let's begin with database design: When would you choose an optimistic locking strategy versus a pessimistic locking strategy in a high-concurrency payment system?",
+    'AI Engineer': "Welcome! Let's start with deep learning fundamentals: Can you explain the vanishing gradient problem, why it occurs in deep networks with sigmoid activations, and how modern architectures mitigate it?",
+    'Full-Stack AI Engineer': "Welcome! Suppose you are designing an AI coding assistant like LearnOS. How would you architect the backend to securely execute untrusted user code while maintaining sub-second API latency?"
+  };
+
+  const firstQuestion = initialQuestions[targetRole] || initialQuestions['Full-Stack AI Engineer'];
+
+  const session: MockInterviewSession = {
+    id: 'int_' + Date.now().toString(36),
+    role: targetRole,
+    level: targetLevel,
+    messages: [
+      {
+        sender: 'ai',
+        text: firstQuestion,
+        timestamp: new Date().toISOString()
+      }
+    ]
+  };
+
+  db.saveInterview(session);
+  res.json({ success: true, session });
+});
+
+// Submit an interview response and receive AI feedback / next question
+router.post('/interview/:id/respond', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const { answer } = req.body;
+
+  const interviews = db.getInterviews();
+  const session = interviews.find(i => i.id === id);
+  if (!session) return res.status(404).json({ success: false, error: 'Interview session not found' });
+
+  // Record user answer
+  session.messages.push({
+    sender: 'user',
+    text: answer,
+    timestamp: new Date().toISOString()
+  });
+
+  // Generate evaluation
+  const lastAiQuestion = session.messages.filter(m => m.sender === 'ai').slice(-1)[0]?.text || 'Technical question';
+  const evaluation = aiService.evaluateInterview(lastAiQuestion, answer, session.role);
+  session.score = evaluation.score;
+  session.feedback = evaluation;
+
+  // Add AI feedback message
+  const aiFeedbackText = `### 🎯 Interviewer Feedback & Score: ${evaluation.score}/100\n\n**Assessment:** ${evaluation.summary}\n\n**Strengths:**\n${evaluation.strengths.map(s => `- ${s}`).join('\n')}\n\n**Areas for Improvement:**\n${evaluation.improvements.map(i => `- ${i}`).join('\n')}\n\n---\n**Follow-up Question:**\nExcellent explanation. Now, how would you test and monitor this system in a production environment with distributed tracing?`;
+
+  session.messages.push({
+    sender: 'ai',
+    text: aiFeedbackText,
+    timestamp: new Date().toISOString()
+  });
+
+  db.saveInterview(session);
+  res.json({ success: true, session, evaluation });
+});
+
+export default router;
